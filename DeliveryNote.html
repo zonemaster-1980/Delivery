@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delivery Note</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            position: relative; /* For watermark positioning */
+        }
+
+        /* Watermark style for screen */
+        .watermark {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 100%;
+            color: lightgray;
+            opacity: 0.1;
+            font-size: 100px;
+            text-align: center;
+            pointer-events: none;
+            user-select: none;
+            white-space: nowrap;
+            overflow: hidden;
+            z-index: -1; 
+            transform: translate(-50%, -50%) rotate(-45deg);
+        }
+
+        /* Style for printing. The watermark will repeat on all printed pages. */
+        @media print {
+            body {
+                position: relative;
+            }
+            .watermark {
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%) rotate(-45deg);
+                opacity: 0.1;
+                font-size: 100px;
+                pointer-events: none;
+                user-select: none;
+                z-index: -1;
+                height: auto;
+                width: auto;
+                white-space: nowrap;
+                overflow: hidden;
+                display: block;
+                overflow: hidden;
+            }
+            #invoice {
+                display: block; /* Ensure invoice is shown in print */
+            }
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            position: relative; /* Ensure table is above watermark */
+            z-index: 1;
+        }
+
+        table,
+        th,
+        td {
+            border: 1px solid black;
+        }
+
+        th,
+        td {
+            padding: 10px;
+            text-align: left;
+        }
+
+        .btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            cursor: pointer;
+            margin: 5px 0;
+        }
+
+        .btn:hover {
+            background-color: #45a049;
+        }
+
+        #invoice {
+            display: none;
+        }
+
+        textarea {
+            width: 100%;
+            height: 80px;
+            margin-top: 10px;
+        }
+
+        .input-container {
+            margin-bottom: 10px;
+        }
+
+        .input-container label {
+            margin-right: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h2>Delivery Note</h2>
+    <div class="watermark">DELIVERED</div>
+    <div id="invoice">
+        <table id="invoiceTable">
+            <thead>
+                <tr>
+                    <th>Item</th>
+                    <th>Quantity</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Items will be added here -->
+            </tbody>
+        </table>
+        <p id="totalQuantity">Total Quantity: 0</p>
+        <h3>Grade:</h3>
+        <p id="gradePrint"></p>
+        <h3>Notes</h3>
+        <textarea id="notes1" placeholder="Add first note here..."></textarea>
+        <textarea id="notes2" placeholder="Add second note here..."></textarea>
+    </div>
+
+    <h3>Add Item</h3>
+    <input type="text" id="item" placeholder="Item" required>
+    <input type="number" id="quantity" placeholder="Quantity" required min="1">
+
+    <button class="btn" id="addItem">Add Item</button>
+
+    <h3>Item Details</h3>
+    <div class="input-container">
+        <label for="grade">Grade:</label>
+        <input type="text" id="gradeInput" placeholder="Grade">
+    </div>
+
+    <h3>Date and Received By</h3>
+    <div class="input-container">
+        <label for="date">Date:</label>
+        <input type="date" id="date">
+    </div>
+    <div class="input-container">
+        <label for="received">Received By:</label>
+        <input type="text" id="received" placeholder="Received By">
+    </div>
+
+    <button class="btn" onclick="printInvoice()">Print Delivery Note</button>
+
+    <script>
+        let totalQuantity = 0;
+
+        document.getElementById('addItem').onclick = function () {
+            const item = document.getElementById('item').value;
+            const quantity = parseInt(document.getElementById('quantity').value);
+
+            if (item && quantity) {
+                // Creating a new row in the table
+                const tableBody = document.querySelector("#invoiceTable tbody");
+                const newRow = document.createElement("tr");
+                newRow.innerHTML = `
+                    <td>${item}</td>
+                    <td>${quantity}</td>
+                `;
+                tableBody.appendChild(newRow);
+
+                // Update total quantity
+                totalQuantity += quantity;
+                document.getElementById('totalQuantity').innerText = `Total Quantity: ${totalQuantity}`;
+
+                // Show the invoice section
+                document.getElementById('invoice').style.display = 'block';
+
+                // Clear input fields for item and quantity
+                document.getElementById('item').value = '';
+                document.getElementById('quantity').value = '';
+            } else {
+                alert("Please fill in both the Item and Quantity fields.");
+            }
+        };
+
+        function printInvoice() {
+            const originalContents = document.body.innerHTML;
+
+            // Gather additional details for printing
+            const invoiceDateContent = document.getElementById('date').value;
+            const receivedByContent = document.getElementById('received').value;
+            const notes1Content = document.getElementById('notes1').value;
+            const notes2Content = document.getElementById('notes2').value;
+            const gradeContent = document.getElementById('gradeInput').value;
+
+            // Construct new print content
+            const invoiceContents = `
+                <h2>Delivery Note</h2>
+                <div class="watermark">DELIVERED</div>
+                <table id="invoiceTable">
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Quantity</th>
+                        </tr>
+                    </thead>
+                    <tbody>${document.querySelector("#invoiceTable tbody").innerHTML}</tbody>
+                </table>
+                <p>Total Quantity: ${totalQuantity}</p>
+                <h3>Grade:</h3>
+                <p>${gradeContent}</p>
+                <h3>Notes:</h3>
+                <p>${notes1Content}</p>
+                <p>${notes2Content}</p>
+                <h3>Date:</h3>
+                <p>${invoiceDateContent}</p>
+                <h3>Received By:</h3>
+                <p>${receivedByContent}</p>
+            `;
+
+            // Temporarily set the body to the invoice contents for printing
+            document.body.innerHTML = invoiceContents;
+            window.print();
+
+            // Restore the original content
+            document.body.innerHTML = originalContents;
+            window.location.reload();
+        }
+    </script>
+
+</body>
+
+</html>
